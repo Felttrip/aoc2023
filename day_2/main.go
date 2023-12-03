@@ -21,9 +21,8 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 type games []game
 
 type game struct {
-	number   int
-	rounds   []round
-	possible bool
+	number int
+	rounds []round
 }
 type round struct {
 	red   int
@@ -39,7 +38,9 @@ func main() {
 	vg := getValidGames(g)
 	// fmt.Printf("%+v\n\n", vg)
 
-	fmt.Printf("%d\n\n", sumGames(vg))
+	fmt.Printf("Valid Game sums %d\n\n", sumGames(vg))
+	fmt.Printf("Power %d\n\n", getTotalPower(g))
+
 	//get valid games
 	//sum up numeners
 }
@@ -50,6 +51,36 @@ func sumGames(gs games) int {
 		total += g.number
 	}
 	return total
+}
+
+func getTotalPower(gs games) int {
+	total := 0
+	for _, g := range gs {
+		total += power(getMaxColors(g))
+	}
+	return total
+}
+
+func power(red, green, blue int) int {
+	return red * green * blue
+}
+
+func getMaxColors(g game) (int, int, int) {
+	maxRed := 0
+	maxGreen := 0
+	maxBlue := 0
+	for _, r := range g.rounds {
+		if r.red > maxRed {
+			maxRed = r.red
+		}
+		if r.green > maxGreen {
+			maxGreen = r.green
+		}
+		if r.blue > maxBlue {
+			maxBlue = r.blue
+		}
+	}
+	return maxRed, maxGreen, maxBlue
 }
 
 // 12 red cubes, 13 green cubes, and 14 blue cubes?
