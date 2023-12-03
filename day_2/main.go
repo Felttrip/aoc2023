@@ -33,10 +33,42 @@ type round struct {
 
 func main() {
 	//parse games into structs
-	g := parseGames("input_1.txt")
-	fmt.Printf("%+v", g)
+	g := parseGames("input_2.txt")
+	// fmt.Printf("%+v\n\n", g)
+
+	vg := getValidGames(g)
+	// fmt.Printf("%+v\n\n", vg)
+
+	fmt.Printf("%d\n\n", sumGames(vg))
 	//get valid games
 	//sum up numeners
+}
+
+func sumGames(gs games) int {
+	total := 0
+	for _, g := range gs {
+		total += g.number
+	}
+	return total
+}
+
+// 12 red cubes, 13 green cubes, and 14 blue cubes?
+func getValidGames(gs games) games {
+	validGames := games{}
+	for _, g := range gs {
+		isValid := true
+		for _, r := range g.rounds {
+			if r.red > 12 || r.green > 13 || r.blue > 14 {
+				// fmt.Printf("invalid game %v, round %+v\n\n", g.number, r)
+				isValid = false
+				break
+			}
+		}
+		if isValid {
+			validGames = append(validGames, g)
+		}
+	}
+	return validGames
 }
 
 func parseGames(fileName string) games {
@@ -63,5 +95,40 @@ func parseLine(line string) game {
 	g := game{
 		number: number,
 	}
+	//3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+	roundStr := strings.Split(initial[1], ";")
+	for _, rounds := range roundStr {
+		r := round{
+			red:   0,
+			green: 0,
+			blue:  0,
+		}
+		//3 blue, 4 red
+		colorCountStr := strings.Split(rounds, ",")
+
+		for _, colorAndCount := range colorCountStr {
+			//3 blue
+			final := strings.Split(colorAndCount, " ")
+			switch final[2] {
+			case "red":
+				if num, err := strconv.Atoi(final[1]); err == nil {
+					r.red += num
+				}
+				break
+			case "blue":
+				if num, err := strconv.Atoi(final[1]); err == nil {
+					r.blue += num
+				}
+				break
+			case "green":
+				if num, err := strconv.Atoi(final[1]); err == nil {
+					r.green += num
+				}
+				break
+			}
+		}
+		g.rounds = append(g.rounds, r)
+	}
+
 	return g
 }
