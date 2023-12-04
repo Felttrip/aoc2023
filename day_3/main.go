@@ -28,6 +28,7 @@ type item struct {
 	checked bool
 }
 
+// Helper methods for the schematic struct
 func (s schematic) String() string {
 	out := ""
 	for y, _ := range s {
@@ -38,6 +39,7 @@ func (s schematic) String() string {
 	}
 	return out
 }
+
 func (s schematic) clone() schematic {
 	duplicate := make(schematic, len(s))
 	for i := range s {
@@ -49,45 +51,68 @@ func (s schematic) clone() schematic {
 
 func main() {
 	//read into 2d array
-	s := parseSchamtic("input_2.txt")
+	s := parseSchematic("input_2.txt")
 	sg := s.clone()
 	fmt.Printf("Part 1: %v\n", processSchematic(s))
 	fmt.Printf("Part 2: %v\n", sumGears(sg))
 
 }
+func parseSchematic(fileName string) schematic {
+	f, err := os.Open(fileName)
 
-func (s schematic) shouldProcess(x, y int) bool {
-	/*
-		in schematic
-		 0 <= x < len(s[y])
-		 0 <= y < len(s)
-	*/
-	inSchematic := x >= 0 && x < len(s[y]) && y >= 0 && y < len(s)
+	if err != nil {
+		fmt.Println(err)
+	}
+	s := bufio.NewScanner(f)
 
-	return inSchematic && !s[y][x].checked
+	s.Split(bufio.ScanLines)
+	schem := schematic{}
+	for s.Scan() {
+		line := []item{}
+
+		for _, r := range s.Text() {
+			i := item{
+				char:    r,
+				checked: false,
+			}
+			line = append(line, i)
+		}
+		schem = append(schem, line)
+	}
+	return schem
 }
 
-// givin a starting possition find the number
-func (s schematic) getNumber(x, y int) int {
-
-	curr := x
-	//move all the way left until theres no number
-	for s.shouldProcess(curr-1, y) && unicode.IsNumber(s[y][curr-1].char) {
-		curr--
+func processSchematic(s schematic) int {
+	total := 0
+	for y := range s {
+		for x, i := range s[y] {
+			if !unicode.IsNumber(i.char) && i.char != '.' {
+				nums := s.lookAround(x, y)
+				// fmt.Printf("symbol %v possition %v, %v, num %v\n", string(i.char), x, y, num)
+				for _, num := range nums {
+					total += num
+				}
+			}
+		}
 	}
-
-	//from the start build up the number untill theres no numbers
-	numStr := ""
-	for s.shouldProcess(curr, y) && unicode.IsNumber(s[y][curr].char) {
-		numStr = numStr + string(s[y][curr].char)
-		s[y][curr].checked = true
-		curr++
-	}
-
-	num, _ := strconv.Atoi(numStr)
-	//return numbers
-	return num
+	return total
 }
+func sumGears(s schematic) int {
+	total := 0
+	for y := range s {
+		for x, i := range s[y] {
+			if i.char == '*' {
+				nums := s.lookAround(x, y)
+				if len(nums) == 2 {
+					total += nums[0] * nums[1]
+
+				}
+			}
+		}
+	}
+	return total
+}
+
 func (s schematic) lookAround(x, y int) []int {
 	//account for index out of bounds
 	rowUp := y - 1
@@ -132,59 +157,35 @@ func (s schematic) lookAround(x, y int) []int {
 	return found
 }
 
-func processSchematic(s schematic) int {
-	total := 0
-	for y := range s {
-		for x, i := range s[y] {
-			if !unicode.IsNumber(i.char) && i.char != '.' {
-				nums := s.lookAround(x, y)
-				// fmt.Printf("symbol %v possition %v, %v, num %v\n", string(i.char), x, y, num)
-				for _, num := range nums {
-					total += num
-				}
-			}
-		}
-	}
-	return total
-}
-func sumGears(s schematic) int {
-	total := 0
-	for y := range s {
-		for x, i := range s[y] {
-			if i.char == '*' {
-				nums := s.lookAround(x, y)
-				if len(nums) == 2 {
-					total += nums[0] * nums[1]
+func (s schematic) shouldProcess(x, y int) bool {
+	/*
+		in schematic
+		 0 <= x < len(s[y])
+		 0 <= y < len(s)
+	*/
+	inSchematic := x >= 0 && x < len(s[y]) && y >= 0 && y < len(s)
 
-				}
-				// fmt.Printf("symbol %v possition %v, %v, num %v\n", string(i.char), x, y, num)
-			}
-		}
-	}
-	return total
+	return inSchematic && !s[y][x].checked
 }
 
-func parseSchamtic(fileName string) schematic {
-	f, err := os.Open(fileName)
+// givin a starting possition find the number
+func (s schematic) getNumber(x, y int) int {
 
-	if err != nil {
-		fmt.Println(err)
+	curr := x
+	//move all the way left until theres no number
+	for s.shouldProcess(curr-1, y) && unicode.IsNumber(s[y][curr-1].char) {
+		curr--
 	}
-	s := bufio.NewScanner(f)
 
-	s.Split(bufio.ScanLines)
-	schem := schematic{}
-	for s.Scan() {
-		line := []item{}
-
-		for _, r := range s.Text() {
-			i := item{
-				char:    r,
-				checked: false,
-			}
-			line = append(line, i)
-		}
-		schem = append(schem, line)
+	//from the start build up the number untill theres no numbers
+	numStr := ""
+	for s.shouldProcess(curr, y) && unicode.IsNumber(s[y][curr].char) {
+		numStr = numStr + string(s[y][curr].char)
+		s[y][curr].checked = true
+		curr++
 	}
-	return schem
+
+	num, _ := strconv.Atoi(numStr)
+	//return numbers
+	return num
 }
