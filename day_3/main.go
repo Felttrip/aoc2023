@@ -38,12 +38,22 @@ func (s schematic) String() string {
 	}
 	return out
 }
+func (s schematic) clone() schematic {
+	duplicate := make(schematic, len(s))
+	for i := range s {
+		duplicate[i] = make([]item, len(s[i]))
+		copy(duplicate[i], s[i])
+	}
+	return duplicate
+}
 
 func main() {
 	//read into 2d array
 	s := parseSchamtic("input_2.txt")
-	// fmt.Println(s)
-	fmt.Println(processSchematic(s))
+	sg := s.clone()
+	fmt.Printf("Part 1: %v\n", processSchematic(s))
+	fmt.Printf("Part 2: %v\n", sumGears(sg))
+
 }
 
 func (s schematic) shouldProcess(x, y int) bool {
@@ -78,47 +88,48 @@ func (s schematic) getNumber(x, y int) int {
 	//return numbers
 	return num
 }
-func (s schematic) lookAround(x, y int) int {
+func (s schematic) lookAround(x, y int) []int {
 	//account for index out of bounds
 	rowUp := y - 1
 	rowDown := y + 1
 	columnLeft := x - 1
 	columnRight := x + 1
-	total := 0
+	found := []int{}
 	//diag up left
 	if s.shouldProcess(columnLeft, rowUp) && unicode.IsNumber(s[rowUp][columnLeft].char) {
-		total += s.getNumber(columnLeft, rowUp)
+		found = append(found, s.getNumber(columnLeft, rowUp))
 	}
 	//up
 	if s.shouldProcess(x, rowUp) && unicode.IsNumber(s[rowUp][x].char) {
-		total += s.getNumber(x, rowUp)
+		found = append(found, s.getNumber(x, rowUp))
 	}
 	//diag up right
 	if s.shouldProcess(columnRight, rowUp) && unicode.IsNumber(s[rowUp][columnRight].char) {
-		total += s.getNumber(columnRight, rowUp)
+		found = append(found, s.getNumber(columnRight, rowUp))
 	}
 
 	//left
 	if s.shouldProcess(columnLeft, y) && unicode.IsNumber(s[y][columnLeft].char) {
-		total += s.getNumber(columnLeft, y)
+		found = append(found, s.getNumber(columnLeft, y))
 	}
 	//right
 	if s.shouldProcess(columnRight, y) && unicode.IsNumber(s[y][columnRight].char) {
-		total += s.getNumber(columnRight, y)
+		found = append(found, s.getNumber(columnRight, y))
 	}
 	//diag down left
 	if s.shouldProcess(columnLeft, rowDown) && unicode.IsNumber(s[rowDown][columnLeft].char) {
-		total += s.getNumber(columnLeft, rowDown)
+		found = append(found, s.getNumber(columnLeft, rowDown))
 	}
 	//down
 	if s.shouldProcess(x, rowDown) && unicode.IsNumber(s[rowDown][x].char) {
-		total += s.getNumber(x, rowDown)
+		found = append(found, s.getNumber(x, rowDown))
 	}
 	//diag down right
 	if s.shouldProcess(columnRight, rowDown) && unicode.IsNumber(s[rowDown][columnRight].char) {
-		total += s.getNumber(columnRight, rowDown)
+		found = append(found, s.getNumber(columnRight, rowDown))
 	}
-	return total
+	// fmt.Println(numPartNumbers, needed)
+	return found
 }
 
 func processSchematic(s schematic) int {
@@ -126,9 +137,27 @@ func processSchematic(s schematic) int {
 	for y := range s {
 		for x, i := range s[y] {
 			if !unicode.IsNumber(i.char) && i.char != '.' {
-				num := s.lookAround(x, y)
+				nums := s.lookAround(x, y)
 				// fmt.Printf("symbol %v possition %v, %v, num %v\n", string(i.char), x, y, num)
-				total += num
+				for _, num := range nums {
+					total += num
+				}
+			}
+		}
+	}
+	return total
+}
+func sumGears(s schematic) int {
+	total := 0
+	for y := range s {
+		for x, i := range s[y] {
+			if i.char == '*' {
+				nums := s.lookAround(x, y)
+				if len(nums) == 2 {
+					total += nums[0] * nums[1]
+
+				}
+				// fmt.Printf("symbol %v possition %v, %v, num %v\n", string(i.char), x, y, num)
 			}
 		}
 	}
