@@ -153,7 +153,6 @@ func (s schematic) lookAround(x, y int) []int {
 	if s.shouldProcess(columnRight, rowDown) && unicode.IsNumber(s[rowDown][columnRight].char) {
 		found = append(found, s.getNumber(columnRight, rowDown))
 	}
-	// fmt.Println(numPartNumbers, needed)
 	return found
 }
 
