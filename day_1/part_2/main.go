@@ -5,29 +5,67 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
-	"github.com/dlclark/regexp2"
-	"github.com/gijsbers/go-pcre"
+	"strings"
 )
 
+var values = []string{
+	"one",
+	"two",
+	"three",
+	"four",
+	"five",
+	"six",
+	"seven",
+	"eight",
+	"nine",
+	"1", "2", "3", "4", "5", "6", "7", "8", "9",
+}
+
+type metaNumber struct {
+	value     string
+	possition int
+}
+
 func main() {
-	r := pcre.MustCompile("(one|two|three|four|five|six|seven|eight|nine)|\\d", 0)
 	lines := readFile(os.Args[1])
 	total := 0
 	//for each row
 	for _, l := range lines {
-		calval := ""
-		matcher := r.MatcherString(l, 0)
-		matches := matcher.ExtractString()
-		fmt.Println(matches)
-		calval = calval + normalize(matches[0])
-		calval = calval + normalize(matches[len(matches)-1])
+		first := metaNumber{
+			value:     "",
+			possition: 9999999,
+		}
+		last := metaNumber{
+			value:     "",
+			possition: -1,
+		}
+
+		for _, value := range values {
+			newFirstPos, newLastPos := findFirstAndLast(l, value)
+			if newFirstPos < first.possition && newFirstPos != -1 {
+				fmt.Printf("first found %v at possition %v \n", value, newFirstPos)
+				first.possition = newFirstPos
+				first.value = value
+			}
+			if newLastPos > last.possition {
+				fmt.Printf("last found %v at possition %v \n", value, newLastPos)
+				last.possition = newLastPos
+				last.value = value
+			}
+		}
+		fmt.Printf("finals: first %+v last %+v\n", first, last)
+		calval := normalize(first.value) + normalize(last.value)
+
 		if num, err := strconv.Atoi(string(calval)); err == nil {
 			total += num
 		}
 	}
 	fmt.Println(total)
 
+}
+
+func findFirstAndLast(s, subString string) (int, int) {
+	return strings.Index(s, subString), strings.LastIndex(s, subString)
 }
 
 func normalize(num string) string {
@@ -54,16 +92,6 @@ func normalize(num string) string {
 		//if it didnt match then it was just a regular number
 		return num
 	}
-}
-
-func regexp2FindAllString(re *regexp2.Regexp, s string) []string {
-	var matches []string
-	m, _ := re.FindStringMatch(s)
-	for m != nil {
-		matches = append(matches, m.String())
-		m, _ = re.FindNextMatch(m)
-	}
-	return matches
 }
 
 func readFile(fileName string) []string {
