@@ -19,47 +19,38 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
 */
 
 type card struct {
-	winners []int
-	numbers []int
-	score   float64
+	winners    []int
+	numbers    []int
+	score      float64
+	numWinners int
 }
 type cards []card
 type cardMap map[int]int
 
 func main() {
-	cs := parseCards("input_1.txt")
+	cs := parseCards("input_2.txt")
 	scoredCards := scoreCards(cs)
-	fmt.Printf("%+v", sumScores(scoredCards))
-	// fanOut(scoredCards)
+	fmt.Printf("part 1 %+v\n", sumScores(scoredCards))
+	fmt.Printf("part 2 %+v\n", fanOut(scoredCards))
 
 }
 
-func fanOut(scoredCards cards) cards {
+func fanOut(scoredCards cards) int {
 	cardMap := map[int]int{}
 	for currentCardIndex, c := range scoredCards {
-		fmt.Printf("processing card %+v\n\n", c)
 		//every card has atleast one copy
 		cardMap[currentCardIndex]++
-		fmt.Printf("state %v \n", cardMap)
-
-		// do this for
-		for processingCardIndex := currentCardIndex + 1; processingCardIndex <= int(c.score) && processingCardIndex < len(scoredCards); processingCardIndex++ {
-
-			//add to the card were processing the number of cards that we have for the current card becasue the would all add to it
+		for processingCardIndex := currentCardIndex + 1; processingCardIndex <= currentCardIndex+c.numWinners && processingCardIndex < len(scoredCards); processingCardIndex++ {
 			cardMap[processingCardIndex] += cardMap[currentCardIndex]
-
-			// fmt.Printf("adding on to card %v \n", processingCardIndex)
 		}
 
 	}
-	fmt.Println(cardMap)
 	total := 0
 	for _, val := range cardMap {
 		total += val
 	}
-	fmt.Println(total)
 
-	return cards{}
+	return total
 }
 
 func sumScores(cs cards) int {
@@ -78,9 +69,10 @@ func scoreCards(cs cards) cards {
 }
 func calcScore(c card) card {
 	scoredCard := card{
-		winners: c.winners,
-		numbers: c.numbers,
-		score:   0,
+		winners:    c.winners,
+		numbers:    c.numbers,
+		score:      0,
+		numWinners: 0,
 	}
 	matches := -1
 	for _, w := range c.winners {
@@ -92,6 +84,7 @@ func calcScore(c card) card {
 	if matches != -1 {
 		scoredCard.score = math.Pow(2, float64(matches))
 	}
+	scoredCard.numWinners = matches + 1
 	return scoredCard
 
 }
